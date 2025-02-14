@@ -13,7 +13,8 @@ Have you often `Update README.md` or `test` as message in your git log? Let crea
   # ollama serve
   ```
 
-* copy `commit-msg` to `.git/hooks/commit-msg` in your Git repo
+* required tools on your computer: curl, jq, sed
+* copy `commit-msg` to `.git/hooks/commit-msg` in your Git repo and make it executable (`chmod +x`)
 * make changes and review AI's work. If you are unhappy, just edit the message with `git commit --amend` bevore push
   
 # super lazy mode
