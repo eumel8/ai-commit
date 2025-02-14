@@ -3,6 +3,8 @@
 Are you tired to think about a commit message at the end of making changes on your code?
 Have you often `Update README.md` or `test` as message in your git log? Let create AI for you a meanful message based on last `git diff`. Here is a Git Commit Hook with AI Support
 
+[demo](https://eumel8.github.io/ai-commit/recording.html)
+
 # preparation
 
 * A running [Ollama](https://ollama.com/) instance running with API access, probably on your computer on `127.0.0.1:11434`
