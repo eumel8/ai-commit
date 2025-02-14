@@ -1,0 +1,51 @@
+#!/bin/bash
+# write commit message by ai
+
+# File containing the commit message
+COMMIT_MSG_FILE=$1
+
+# Get the Git diff
+DIFF=$(git diff --cached)
+
+# If there's no diff (e.g., an empty commit), exit
+if [ -z "$DIFF" ]; then
+  exit 0
+fi
+
+# Define the Ollama API URL
+OLLAMA_API="http://127.0.0.1:11434/api/chat"
+MODEL="networkjohnny/deepseek-coder-v2-lite-base-q4_k_m-gguf:latest"
+
+# Define the prompt for generating commit messages
+PROMPT=$(jq -n --arg diff "$DIFF" \
+  '{
+    "model": "'$MODEL'",
+    "messages": [
+      {"role": "system", "content": "You are an expert software engineer."},
+      {"role": "user", "content": ("Based on the following Git diff, generate a concise, meaningful commit message.\n\nKeep it within 50 characters and ensure it clearly describes the change.\n\nGit diff:\n" + $diff + "Hint: Answer only with the commit message and it should take maximal 10 seconds")}
+    ]
+  }'
+)
+
+# Make the API request to Ollama
+RESPONSE=$(curl -s -X POST "$OLLAMA_API" -H "Content-Type: application/json" -d "$PROMPT")
+
+# Extract **only** the commit message content from JSON
+COMMIT_MSG=$(echo "$RESPONSE" | jq -r '.message.content // ""')
+
+# **More cleaning**: Remove all unwanted prefixes
+COMMIT_MSG=$(echo "$COMMIT_MSG" | sed -E 's/^(`|")//g')
+
+# Remove newlines, trim extra spaces, and enforce single-line output
+COMMIT_MSG=$(echo "$COMMIT_MSG" | tr -d '\n' | sed 's/  */ /g')
+
+# Truncate to 50 characters (safety limit)
+COMMIT_MSG=$(echo "$COMMIT_MSG" | sed -E 's/^(.{1,50})([[:space:]]|$)/\1 /')
+
+# If the AI response is empty, do nothing
+if [ -z "$COMMIT_MSG" ]; then
+  exit 0
+fi
+
+# Write the AI-generated commit message to the commit message file
+echo "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
