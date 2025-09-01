@@ -6,4 +6,4 @@ on:
 
 jobs:
   call-workflow:
-    uses: eumel8/workflow-templates/.github/workflows/container.yaml@0.0.7
+    uses: eumel8/workflow-templates/.github/workflows/build.yaml@0.0.7
