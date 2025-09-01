@@ -94,7 +94,12 @@ func callOpenAI(apiKey, model, prompt string) (string, error) {
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: httpTimeoutSeconds * time.Second}
+	client := &http.Client{
+		Timeout: httpTimeoutSeconds * time.Second,
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
