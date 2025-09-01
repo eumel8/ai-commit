@@ -1,0 +1,9 @@
+name: Build Go (template)
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  call-workflow:
+    uses: eumel8/workflow-templates/.github/workflows/container.yaml@0.0.7

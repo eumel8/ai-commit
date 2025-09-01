@@ -35,6 +35,27 @@ ai-commit works out of the bos with a local Ollama instance. Nevertheless you ca
 alias ac='git add . && git commit -m ""'
 ```
 
+# extra super lazy mode
+
+If you don't care or don't want to run Ollama, you can simply use ChatGPT. I ask ChatGPT for a program and he created `ai-commit`.
+Copy the binary from the Release page to `.git/hooks/commit-msg`. Go to [OpenAI Platform(https://platform.openai.com/settings/organization/api-keys) to create an API key (needs a billing account because it's a paid service). Set env var:
+
+```bash
+export OPENAI_API_KEY=sk-xxxx
+```
+
+Enjoy
+
+Or you want to use it global?
+
+```bash
+export OPENAI_API_KEY=sk-xxxx
+mkdir ~/.git-hooks
+go build -o ~/.git-hooks/commit-msg
+git config --global core.hooksPath ~/.git-hooks
+```
+
+
 # Credits
 
 Frank Kloeker f.kloeker@telekom.de
