@@ -60,7 +60,7 @@ func stagedDiff() (string, error) {
 
 func buildPrompt(diff string) string {
 	return "Create a Commit-Message following Conventional Commits.\n" +
-		"English. Subject max. 72 sign, optional body with explenation.\n\nDiff:\n" +
+		"English. Subject max. 72 sign, optional body with explanation, without Markdown, only plain text.\n\nDiff:\n" +
 		diff
 }
 
