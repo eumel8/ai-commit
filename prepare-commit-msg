@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# prepare-commit-msg hook: generate a commit message using OpenCode AI
+#
+# Powered by: opencode run (https://opencode.ai/docs/cli)
+#
+# Triggered for every commit EXCEPT:
+#   - merge commits  (source == "merge")
+#   - squash commits (source == "squash")
+#   - explicit -m/--message commits (source == "message")
+#
+# Usage:
+#   git commit            # AI message is generated and opened in editor
+#   git commit --no-edit  # AI message is used as-is
+#
+# Requirements:
+#   - opencode must be in PATH and authenticated
+#   - git must be available
+
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"   # "message", "template", "merge", "squash", or empty
+
+# Skip generation for merge, squash, or when the user explicitly supplied -m
+case "$COMMIT_SOURCE" in
+  merge|squash|message)
+    exit 0
+    ;;
+esac
+
+# Require opencode
+if ! command -v opencode &>/dev/null; then
+  echo "prepare-commit-msg: 'opencode' not found in PATH, skipping AI message generation." >&2
+  exit 0
+fi
+
+# Collect context -------------------------------------------------------
+
+# Staged diff (what is actually being committed)
+STAGED_DIFF=$(git diff --cached --stat 2>/dev/null)
+STAGED_DIFF_FULL=$(git diff --cached 2>/dev/null | head -c 8000)   # cap to avoid huge prompts
+
+# Last commit message for style reference
+LAST_COMMIT=$(git log -1 --pretty=format:"%s%n%n%b" 2>/dev/null)
+
+# Build the prompt -------------------------------------------------------
+PROMPT="You are a git commit message generator.
+
+Your job: write a concise, conventional git commit message for the staged changes shown below.
+
+Rules:
+- Use the Conventional Commits format: <type>(<optional scope>): <short description>
+  Types: feat, fix, docs, style, refactor, test, chore, ci, build, perf
+- Subject line: imperative mood, ≤72 chars, no period at end
+- If useful, add a blank line then a short body (why / what changed) – keep it factual
+- Do NOT add any explanation, preamble, or markdown fencing – output ONLY the commit message
+
+Last commit (use as style reference, do NOT repeat it):
+${LAST_COMMIT}
+
+Staged file changes (stat):
+${STAGED_DIFF}
+
+Staged diff (truncated to 8 KB):
+${STAGED_DIFF_FULL}
+
+Output only the commit message now:"
+
+# Run OpenCode -----------------------------------------------------------
+AI_MESSAGE=$(opencode run "$PROMPT" 2>/dev/null)
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ] || [ -z "$AI_MESSAGE" ]; then
+  echo "prepare-commit-msg: OpenCode did not return a message (exit $EXIT_CODE), skipping." >&2
+  exit 0
+fi
+
+# Strip potential markdown code fences that some models add
+AI_MESSAGE=$(printf '%s' "$AI_MESSAGE" | sed '/^```/d')
+
+# Write the AI-generated message, followed by the original file content
+# (which typically contains commented-out git status / diff hints)
+ORIGINAL_CONTENT=$(cat "$COMMIT_MSG_FILE")
+{
+  printf '%s\n' "$AI_MESSAGE"
+  if [ -n "$ORIGINAL_CONTENT" ]; then
+    printf '\n'
+    printf '%s\n' "$ORIGINAL_CONTENT"
+  fi
+} > "$COMMIT_MSG_FILE"

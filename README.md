@@ -55,6 +55,20 @@ go build -o ~/.git-hooks/commit-msg
 git config --global core.hooksPath ~/.git-hooks
 ```
 
+# opencode (2026)
+
+If you alreay use [opencode](https://opencode.ai) look at the [prepare-commit-msg](prepare-commit-msg) which can copied to the `.git/hooks` folder to generate commit messages with opencode. Or you can provide this hook within the repo:
+
+```bash
+# Copy to a tracked directory
+cp .git/hooks/prepare-commit-msg .githooks/prepare-commit-msg
+git add .githooks/prepare-commit-msg
+# Tell git to use it
+git config core.hooksPath .githooks
+```
+
+hint: each commit will generate a session in opencode and, of course, you need a LLM provider. But opencode has already great solutions for that.
+
 
 # Credits
 
